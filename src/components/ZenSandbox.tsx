@@ -56,21 +56,39 @@ export const ZenSandbox: React.FC = () => {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Fluid resize observer setup
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const { width, height } = entry.contentRect;
+    let resizeObserver: ResizeObserver | null = null;
+
+    const handleResize = (w?: number, h?: number) => {
+      const width = w || containerRef.current?.clientWidth || 300;
+      const height = h || containerRef.current?.clientHeight || 280;
+      
+      if (width > 0 && height > 0) {
         canvas.width = width;
         canvas.height = height;
-
-        // Clear and draw background
         ctx.fillStyle = "#0F172A"; // deep slate-900 background
         ctx.fillRect(0, 0, width, height);
       }
-    });
+    };
 
-    if (containerRef.current) {
+    const handleResizeFallback = () => {
+      handleResize();
+    };
+
+    if (typeof ResizeObserver !== "undefined" && containerRef.current) {
+      resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          let { width, height } = entry.contentRect;
+          if (!width || !height) {
+            width = containerRef.current?.clientWidth || 0;
+            height = containerRef.current?.clientHeight || 0;
+          }
+          handleResize(width, height);
+        }
+      });
       resizeObserver.observe(containerRef.current);
+    } else {
+      handleResize();
+      window.addEventListener("resize", handleResizeFallback);
     }
 
     // Animation Loop
@@ -138,7 +156,11 @@ export const ZenSandbox: React.FC = () => {
     tick();
 
     return () => {
-      resizeObserver.disconnect();
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      } else {
+        window.removeEventListener("resize", handleResizeFallback);
+      }
       cancelAnimationFrame(animationId);
     };
   }, [activeMode]);
@@ -190,18 +212,44 @@ export const ZenSandbox: React.FC = () => {
     }
   };
 
-  const getCoordinates = (e: React.PointerEvent<HTMLCanvasElement>): { x: number; y: number } | null => {
+  const getCoordinates = (e: any): { x: number; y: number } | null => {
     const canvas = canvasRef.current;
     if (!canvas) return null;
 
     const rect = canvas.getBoundingClientRect();
+    let clientX = 0;
+    let clientY = 0;
+
+    if (e.touches && e.touches.length > 0) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else if (e.changedTouches && e.changedTouches.length > 0) {
+      clientX = e.changedTouches[0].clientX;
+      clientY = e.changedTouches[0].clientY;
+    } else if (e.clientX !== undefined) {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    } else if (e.nativeEvent) {
+      const ne = e.nativeEvent;
+      if (ne.touches && ne.touches.length > 0) {
+        clientX = ne.touches[0].clientX;
+        clientY = ne.touches[0].clientY;
+      } else if (ne.changedTouches && ne.changedTouches.length > 0) {
+        clientX = ne.changedTouches[0].clientX;
+        clientY = ne.changedTouches[0].clientY;
+      } else {
+        clientX = ne.clientX || 0;
+        clientY = ne.clientY || 0;
+      }
+    }
+
     return {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
+      x: clientX - rect.left,
+      y: clientY - rect.top,
     };
   };
 
-  const handleStart = (e: React.PointerEvent<HTMLCanvasElement>) => {
+  const handleStart = (e: any) => {
     isDrawingRef.current = true;
     const pos = getCoordinates(e);
     if (pos) {
@@ -210,7 +258,7 @@ export const ZenSandbox: React.FC = () => {
     }
   };
 
-  const handleMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+  const handleMove = (e: any) => {
     if (!isDrawingRef.current) return;
 
     const pos = getCoordinates(e);
@@ -307,7 +355,7 @@ export const ZenSandbox: React.FC = () => {
         </div>
 
         {/* Canvas Display Section (Order 1 on mobile, Order 2 on desktop) */}
-        <div className="order-1 lg:order-2 flex-1 flex flex-col">
+        <div className="order-1 lg:order-2 w-full lg:flex-1 flex flex-col">
           <div className="flex items-start gap-1.5 text-xs text-slate-400 mb-2">
             <Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
             <span>
@@ -318,7 +366,8 @@ export const ZenSandbox: React.FC = () => {
 
           <div
             ref={containerRef}
-            className="w-full h-[280px] sm:h-[340px] lg:h-[400px] rounded-3xl overflow-hidden border border-slate-100 dark:border-slate-850 shadow-inner relative select-none cursor-crosshair bg-slate-950"
+            className="w-full h-[290px] min-h-[290px] sm:h-[340px] sm:min-h-[340px] lg:h-[400px] lg:min-h-[400px] rounded-3xl overflow-hidden border border-slate-100 dark:border-slate-850 shadow-inner relative select-none cursor-crosshair bg-slate-950 touch-none"
+            style={{ touchAction: "none" }}
           >
             <canvas
               ref={canvasRef}
@@ -327,6 +376,10 @@ export const ZenSandbox: React.FC = () => {
               onPointerUp={handleStop}
               onPointerLeave={handleStop}
               onPointerCancel={handleStop}
+              onTouchStart={handleStart}
+              onTouchMove={handleMove}
+              onTouchEnd={handleStop}
+              onTouchCancel={handleStop}
               className="w-full h-full block absolute inset-0 touch-none"
               style={{ touchAction: "none" }}
             />
