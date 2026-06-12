@@ -247,80 +247,90 @@ export const ZenSandbox: React.FC = () => {
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900/60 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 md:p-8 shadow-sm flex flex-col md:flex-row gap-8" id="sandbox-section">
-      {/* Intro section */}
-      <div className="md:w-1/3 flex flex-col justify-between space-y-6">
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-slate-100 dark:bg-slate-800 rounded-2xl">
-              <Compass className="w-5 h-5 text-slate-600 dark:text-slate-350" />
-            </div>
-            <div>
-              <h2 className="text-xl font-medium text-slate-800 dark:text-slate-100">禅意手绘解压沙盘</h2>
-              <p className="text-xs text-slate-400 dark:text-slate-500">
-                在一笔划一抹沙中，将漂泊散乱的思绪轻柔安置
-              </p>
-            </div>
-          </div>
+    <div className="bg-white dark:bg-slate-900/60 rounded-3xl border border-slate-100 dark:border-slate-800 p-5 md:p-8 shadow-sm flex flex-col gap-6" id="sandbox-section">
+      {/* Shared Header on Top */}
+      <div className="flex items-center gap-3 border-b border-slate-100/50 dark:border-slate-800/50 pb-4">
+        <div className="p-2.5 bg-slate-100 dark:bg-slate-800 rounded-2xl">
+          <Compass className="w-5 h-5 text-slate-600 dark:text-slate-350" />
+        </div>
+        <div>
+          <h2 className="text-xl font-medium text-slate-800 dark:text-slate-100">禅意手绘解压沙盘</h2>
+          <p className="text-xs text-slate-400 dark:text-slate-500">
+            在一笔划一抹沙中，将漂泊散乱的思绪轻柔安置
+          </p>
+        </div>
+      </div>
 
-          <div className="flex flex-col gap-2 pt-2">
+      {/* Main split content */}
+      <div className="flex flex-col lg:flex-row gap-6 md:gap-8">
+        {/* Controls Column (Order 2 on mobile, Order 1 on desktop) */}
+        <div className="order-2 lg:order-1 lg:w-1/3 flex flex-col justify-between gap-5">
+          <div className="space-y-4">
             <label className="block text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
               选择绘画意境
             </label>
-            {SANDBOX_MODES.map((mode) => (
-              <button
-                key={mode.id}
-                onClick={() => {
-                  setActiveMode(mode.id);
-                  particlesRef.current = []; // swap modes clean particles
-                }}
-                className={`w-full text-left p-3.5 rounded-2xl border transition focus:outline-none cursor-pointer ${
-                  activeMode === mode.id
-                    ? "bg-slate-50 border-slate-200 dark:bg-slate-850 dark:border-slate-800 text-slate-800 dark:text-slate-100 font-medium"
-                    : "bg-transparent border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/20"
-                }`}
-              >
-                <div className="text-sm font-semibold tracking-wide" style={{ color: activeMode === mode.id ? mode.color : undefined }}>
-                  {mode.name}
-                </div>
-                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 leading-relaxed">
-                  {mode.description}
-                </p>
-              </button>
-            ))}
+            <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-2 lg:gap-3">
+              {SANDBOX_MODES.map((mode) => (
+                <button
+                  key={mode.id}
+                  onClick={() => {
+                    setActiveMode(mode.id);
+                    particlesRef.current = []; // swap modes clean particles
+                  }}
+                  className={`w-full text-left p-3.5 rounded-2xl border transition focus:outline-none cursor-pointer ${
+                    activeMode === mode.id
+                      ? "bg-slate-50 border-slate-200 dark:bg-slate-850 dark:border-slate-800 text-slate-800 dark:text-slate-100 font-medium"
+                      : "bg-transparent border-transparent hover:bg-slate-50/50 dark:hover:bg-slate-800/10"
+                  }`}
+                >
+                  <div className="flex items-center lg:items-start gap-2 lg:gap-0">
+                    <span className="w-1.5 h-1.5 rounded-full shrink-0 sm:hidden lg:hidden" style={{ backgroundColor: mode.color }} />
+                    <div className="text-sm font-semibold tracking-wide" style={{ color: activeMode === mode.id ? mode.color : undefined }}>
+                      {mode.name}
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 leading-relaxed hidden sm:block lg:block">
+                    {mode.description}
+                  </p>
+                </button>
+              ))}
+            </div>
           </div>
+
+          <button
+            onClick={handleClear}
+            className="w-full py-3 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-500 dark:text-slate-400 rounded-2xl text-xs font-semibold transition border border-slate-100 dark:border-slate-850/60 flex items-center justify-center gap-1 cursor-pointer"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            抹平沙盘回忆
+          </button>
         </div>
 
-        <button
-          onClick={handleClear}
-          className="w-full py-3 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-500 dark:text-slate-400 rounded-2xl text-xs font-semibold transition border border-slate-100 dark:border-slate-850/60 flex items-center justify-center gap-1 cursor-pointer"
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-          抹平沙盘回忆
-        </button>
-      </div>
+        {/* Canvas Display Section (Order 1 on mobile, Order 2 on desktop) */}
+        <div className="order-1 lg:order-2 flex-1 flex flex-col">
+          <div className="flex items-start gap-1.5 text-xs text-slate-400 mb-2">
+            <Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+            <span>
+              <span className="lg:hidden">贴士：在上方夜色画布中用手指划动，轨迹随时间流逝会缓缓释怀淡出。</span>
+              <span className="hidden lg:inline">贴士：在右侧夜色中按住鼠标或者手指划动，轨迹随时间流逝会缓缓释怀淡出。</span>
+            </span>
+          </div>
 
-      {/* Canvas Drawing Sandbox */}
-      <div className="flex-1 flex flex-col">
-        <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-2">
-          <Info className="w-3.5 h-3.5" />
-          <span>贴士：在右侧夜色中按住鼠标或者手指划动，轨迹随时间流逝会缓缓释怀淡出。</span>
-        </div>
-
-        <div
-          ref={containerRef}
-          className="flex-1 h-[360px] md:h-[420px] rounded-3xl overflow-hidden border border-slate-100 dark:border-slate-800/50 shadow-inner relative select-none cursor-crosshair bg-slate-950"
-        >
-          <canvas
-            ref={canvasRef}
-            onPointerDown={handleStart}
-            onPointerMove={handleMove}
-            onPointerUp={handleStop}
-            onPointerLeave={handleStop}
-            onPointerCancel={handleStop}
-            className="w-full h-full block absolute inset-0 touch-none"
-            style={{ touchAction: "none" }}
-          />
+          <div
+            ref={containerRef}
+            className="w-full h-[280px] sm:h-[340px] lg:h-[400px] rounded-3xl overflow-hidden border border-slate-100 dark:border-slate-850 shadow-inner relative select-none cursor-crosshair bg-slate-950"
+          >
+            <canvas
+              ref={canvasRef}
+              onPointerDown={handleStart}
+              onPointerMove={handleMove}
+              onPointerUp={handleStop}
+              onPointerLeave={handleStop}
+              onPointerCancel={handleStop}
+              className="w-full h-full block absolute inset-0 touch-none"
+              style={{ touchAction: "none" }}
+            />
+          </div>
         </div>
       </div>
     </div>
