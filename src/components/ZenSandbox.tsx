@@ -190,32 +190,18 @@ export const ZenSandbox: React.FC = () => {
     }
   };
 
-  const getCoordinates = (e: any): { x: number; y: number } | null => {
+  const getCoordinates = (e: React.PointerEvent<HTMLCanvasElement>): { x: number; y: number } | null => {
     const canvas = canvasRef.current;
     if (!canvas) return null;
 
     const rect = canvas.getBoundingClientRect();
-    let clientX, clientY;
-
-    if (e.touches && e.touches.length > 0) {
-      clientX = e.touches[0].clientX;
-      clientY = e.touches[0].clientY;
-    } else if (e.clientX !== undefined) {
-      clientX = e.clientX;
-      clientY = e.clientY;
-    } else {
-      return null;
-    }
-
     return {
-      x: clientX - rect.left,
-      y: clientY - rect.top,
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
     };
   };
 
-  const handleStart = (e: any) => {
-    // Prevent scrolling on mobile devices when touch drawing
-    if (e.cancelable) e.preventDefault();
+  const handleStart = (e: React.PointerEvent<HTMLCanvasElement>) => {
     isDrawingRef.current = true;
     const pos = getCoordinates(e);
     if (pos) {
@@ -224,9 +210,8 @@ export const ZenSandbox: React.FC = () => {
     }
   };
 
-  const handleMove = (e: any) => {
+  const handleMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (!isDrawingRef.current) return;
-    if (e.cancelable) e.preventDefault();
 
     const pos = getCoordinates(e);
     if (pos && lastPosRef.current) {
@@ -328,14 +313,13 @@ export const ZenSandbox: React.FC = () => {
         >
           <canvas
             ref={canvasRef}
-            onMouseDown={handleStart}
-            onMouseMove={handleMove}
-            onMouseUp={handleStop}
-            onMouseLeave={handleStop}
-            onTouchStart={handleStart}
-            onTouchMove={handleMove}
-            onTouchEnd={handleStop}
+            onPointerDown={handleStart}
+            onPointerMove={handleMove}
+            onPointerUp={handleStop}
+            onPointerLeave={handleStop}
+            onPointerCancel={handleStop}
             className="w-full h-full block absolute inset-0 touch-none"
+            style={{ touchAction: "none" }}
           />
         </div>
       </div>
